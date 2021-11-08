@@ -15,5 +15,6 @@ type MfData struct {
 	RepurchasePrice sql.NullFloat64
 	SalePrice sql.NullFloat64
 	Date time.Time
+	CreatedAt time.Time
 }
 

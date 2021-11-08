@@ -35,17 +35,18 @@ func (m manager) TransformData(data string) error {
 		splitArray := strings.Split(line, ";")
 
 		// Check first element an int ?
-		if schemeCode, err := strconv.Atoi(splitArray[0]); err == nil {
+		if schemeCode, err := strconv.Atoi(splitArray[0]); err == nil && len(splitArray)>=8 {
+			// TODO: This has to be outside!
 			actualRowCount += 1
 			var nullableNav, nullableRepurchasePrice, nullableSalePrice sql.NullFloat64
 			var nullableSchemeName, nullableIsinDivPayoutGrowth, nullableIsinDivReinvestment sql.NullString
 			if nav, err := strconv.ParseFloat(splitArray[4], 64);err == nil{
 				nullableNav.Scan(nav)
 			}
-			if repurchasePrice, err := strconv.ParseFloat(splitArray[4], 64);err == nil{
+			if repurchasePrice, err := strconv.ParseFloat(splitArray[5], 64);err == nil{
 				nullableNav.Scan(repurchasePrice)
 			}
-			if salePrice, err := strconv.ParseFloat(splitArray[4], 64);err == nil{
+			if salePrice, err := strconv.ParseFloat(splitArray[6], 64);err == nil{
 				nullableNav.Scan(salePrice)
 			}
 			if splitArray[1]!=""{
@@ -76,6 +77,7 @@ func (m manager) TransformData(data string) error {
 				RepurchasePrice : nullableRepurchasePrice,
 				SalePrice : nullableSalePrice,
 				Date : date,
+				CreatedAt: time.Now(),
 			})
 		}
 		// Change MF if Parent name present?
@@ -85,7 +87,11 @@ func (m manager) TransformData(data string) error {
 	}
 	// Also, insert if rows formed!
 	if parentMf!=""{
-		logrus.Info("Rows formed, calling Load data!")
+		// If no rows formed
+		if actualRowCount==0{
+			return utils.NoRowsFormed
+		}
+		logrus.Infof("%d Rows formed, calling Load data! (transform service)", len(rows))
 		// Insert call
 		err := m.loadManager.LoadData(rows)
 		if err != nil {
